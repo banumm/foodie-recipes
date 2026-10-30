@@ -1,10 +1,25 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, TextInput, ScrollView, Alert, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Image, TextInput, ScrollView, Alert, Platform, StyleSheet } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { CATEGORIES, RECIPES } from './data';
 import { useStore } from './store';
 
 const ORANGE = '#e8590c';
+
+// Alert.alert не работает в веб-превью Snack, поэтому на web используем браузерные диалоги.
+function showAlert(title, message, buttons) {
+  if (Platform.OS !== 'web') {
+    Alert.alert(title, message, buttons);
+    return;
+  }
+  const text = message ? `${title}\n\n${message}` : title;
+  if (!buttons) {
+    window.alert(text);
+    return;
+  }
+  const confirmButton = buttons.find((b) => b.style === 'destructive') || buttons[buttons.length - 1];
+  if (window.confirm(text)) confirmButton?.onPress?.();
+}
 
 function Heart({ id }) {
   const { state, dispatch } = useStore();
@@ -101,7 +116,7 @@ export function DetailScreen({ route, navigation }) {
   const item = [...RECIPES, ...state.mine].find((r) => r.id === route.params.id);
   if (!item) return null;
   const mine = state.mine.some((m) => m.id === item.id);
-  const del = () => Alert.alert('Удалить рецепт?', item.title, [
+  const del = () => showAlert('Удалить рецепт?', item.title, [
     { text: 'Отмена', style: 'cancel' },
     { text: 'Удалить', style: 'destructive', onPress: () => { dispatch({ type: 'DELETE', id: item.id }); navigation.goBack(); } },
   ]);
@@ -143,13 +158,13 @@ export function FormScreen({ route, navigation }) {
   const [steps, setSteps] = useState(old?.instructions.join('\n') || '');
 
   const pick = async () => {
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.6 });
+    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6 });
     if (!res.canceled) setImage(res.assets[0].uri);
   };
   const lines = (t) => t.split('\n').map((x) => x.trim()).filter(Boolean);
   const save = () => {
     if (!title.trim() || !lines(ing).length || !lines(steps).length)
-      return Alert.alert('Заполните название, ингредиенты и инструкции');
+      return showAlert('Заполните название, ингредиенты и инструкции');
     dispatch({ type: 'SAVE', recipe: {
       id: old?.id || String(Date.now()), title: title.trim(), image, emoji: '🍽️', category: 'Мои',
       ingredients: lines(ing), instructions: lines(steps),
