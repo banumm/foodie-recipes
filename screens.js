@@ -158,7 +158,7 @@ export function FormScreen({ route, navigation }) {
   const [steps, setSteps] = useState(old?.instructions.join('\n') || '');
 
   const pick = async () => {
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6 });
+    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.6 });
     if (!res.canceled) setImage(res.assets[0].uri);
   };
   const lines = (t) => t.split('\n').map((x) => x.trim()).filter(Boolean);
