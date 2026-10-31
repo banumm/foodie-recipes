@@ -1,7 +1,7 @@
 const r = (id, category, emoji, title, time, servings, calories, difficulty, ingredients, instructions) =>
   ({ id, category, emoji, title, time, servings, calories, difficulty, ingredients, instructions });
 
-export const CATEGORIES = ['Все', 'Завтраки', 'Обеды', 'Ужины', 'Десерты', 'Салаты', 'Супы', 'Веган', 'Морепродукты', 'Паста', 'Напитки', 'Закуски'];
+export const CATEGORIES = ['Все', 'Завтраки', 'Обеды', 'Ужины', 'Десерты', 'Салаты', 'Супы', 'Веган', 'Морепродукты', 'Паста', 'Напитки', 'Закуски', 'Мои'];
 
 export const RECIPES = [
   r('1', 'Завтраки', '🍳', 'Омлет с сыром', '10 мин', '2', '320 ккал', 'Легко',
