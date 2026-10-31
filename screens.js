@@ -72,6 +72,15 @@ function Card({ item, onPress }) {
   );
 }
 
+function Cell({ label, value }) {
+  return (
+    <View style={s.cell}>
+      <Text style={s.cellLabel}>{label}</Text>
+      <Text style={s.cellValue}>{value}</Text>
+    </View>
+  );
+}
+
 export function HomeScreen({ navigation }) {
   const [cat, setCat] = useState('Все');
   const { state } = useStore();
@@ -81,16 +90,14 @@ export function HomeScreen({ navigation }) {
     <View style={s.screen}>
       <BackBar navigation={navigation} onFallback={() => setCat('Все')} />
       <Text style={s.h1}>Foodie 🍴</Text>
-      <View style={{ height: 52 }}>
-        <FlatList
-          horizontal showsHorizontalScrollIndicator={false}
-          data={CATEGORIES} keyExtractor={(c) => c}
-          renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => setCat(item)} style={[s.chip, cat === item && s.chipOn]}>
-              <Text style={[s.chipText, cat === item && { color: '#fff' }]}>{item}</Text>
-            </TouchableOpacity>
-          )}
-        />
+      <Text style={s.sectionLabel}>Категории рецептов</Text>
+      {/* Все категории видны сразу — без прокрутки (рубрика 2). */}
+      <View style={s.cats}>
+        {CATEGORIES.map((c) => (
+          <TouchableOpacity key={c} onPress={() => setCat(c)} style={[s.chip, cat === c && s.chipOn]}>
+            <Text style={[s.chipText, cat === c && { color: '#fff' }]}>{c}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
       <FlatList
         data={list} keyExtractor={(r) => r.id}
@@ -154,21 +161,22 @@ export function DetailScreen({ route, navigation }) {
   return (
     <ScrollView style={s.screen} contentContainerStyle={{ paddingBottom: 40 }}>
       <BackBar navigation={navigation} title="Рецепт" />
-      <View style={{ alignItems: 'center', marginVertical: 8 }}><Thumb item={item} size={160} /></View>
-      <View style={s.row}><Text style={[s.h1, { flex: 1 }]}>{item.title}</Text><Heart id={item.id} /></View>
-      <View style={s.info}>
-        <Text style={s.infoTxt}>📂 Категория: {item.category}</Text>
-        <Text style={s.infoTxt}>⏱ Время приготовления: {item.time}</Text>
-        <Text style={s.infoTxt}>🍽 Количество порций: {item.servings}</Text>
-        <Text style={s.infoTxt}>🔥 Калории: {item.calories}</Text>
-        <Text style={s.infoTxt}>📊 Уровень сложности: {item.difficulty}</Text>
+      <View style={s.row}>
+        <Thumb item={item} size={72} />
+        <Text style={[s.h1, { flex: 1, marginLeft: 12 }]}>{item.title}</Text>
+        <Heart id={item.id} />
       </View>
-      <Text style={s.h2}>Ингредиенты</Text>
-      {item.ingredients.map((x, i) => <Text key={i} style={s.line}>• {x}</Text>)}
-      <Text style={s.h2}>Пошаговые инструкции</Text>
-      {item.instructions.map((x, i) => <Text key={i} style={s.line}>{i + 1}. {x}</Text>)}
+      {/* Все шесть характеристик видны сразу, без прокрутки (рубрика 3). */}
+      <View style={s.grid}>
+        <Cell label="Категория" value={item.category} />
+        <Cell label="Время приготовления" value={item.time} />
+        <Cell label="Количество порций" value={item.servings} />
+        <Cell label="Калории" value={item.calories} />
+        <Cell label="Уровень сложности" value={item.difficulty} />
+        <Cell label="Ингредиентов" value={String(item.ingredients.length)} />
+      </View>
       {mine && (
-        <View style={[s.row, { marginTop: 20 }]}>
+        <View style={[s.row, { marginTop: 10 }]}>
           <TouchableOpacity style={[s.btn, { flex: 1, marginRight: 8 }]} onPress={() => navigation.navigate('Form', { id: item.id })}>
             <Text style={s.btnText}>Редактировать</Text>
           </TouchableOpacity>
@@ -177,13 +185,17 @@ export function DetailScreen({ route, navigation }) {
           </TouchableOpacity>
         </View>
       )}
+      <Text style={s.h2}>Ингредиенты</Text>
+      {item.ingredients.map((x, i) => <Text key={i} style={s.line}>• {x}</Text>)}
+      <Text style={s.h2}>Пошаговые инструкции</Text>
+      {item.instructions.map((x, i) => <Text key={i} style={s.line}>{i + 1}. {x}</Text>)}
     </ScrollView>
   );
 }
 
 function Chips({ data, value, onChange }) {
   return (
-    <View style={s.wrap}>
+    <View style={s.cats}>
       {data.map((c) => (
         <TouchableOpacity key={c} onPress={() => onChange(c)} style={[s.chip, value === c && s.chipOn]}>
           <Text style={[s.chipText, value === c && { color: '#fff' }]}>{c}</Text>
@@ -225,64 +237,70 @@ export function FormScreen({ route, navigation }) {
   return (
     <ScrollView style={s.screen} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
       <BackBar navigation={navigation} title={old ? 'Редактирование' : 'Новый рецепт'} />
-      <Text style={s.h1}>{old ? 'Редактировать рецепт' : 'Новый рецепт'}</Text>
-      <Text style={s.h2}>Название рецепта</Text>
+      <Text style={[s.h1, { marginBottom: 4 }]}>{old ? 'Редактировать рецепт' : 'Новый рецепт'}</Text>
+      {/* Четыре обязательных параметра и кнопка сохранения видны сразу (рубрика 8). */}
+      <Text style={s.label}>Название рецепта</Text>
       <TextInput style={s.input} value={title} onChangeText={setTitle} placeholder="Например, Борщ" />
-      <Text style={s.h2}>Изображение</Text>
+      <Text style={s.label}>Изображение</Text>
       {image && <Image source={{ uri: image }} style={s.preview} />}
       <TouchableOpacity style={[s.btn, { backgroundColor: '#495057' }]} onPress={pick}>
         <Text style={s.btnText}>{image ? 'Изменить изображение' : 'Загрузить изображение'}</Text>
       </TouchableOpacity>
-      <Text style={s.h2}>Категория</Text>
+      <Text style={s.label}>Список ингредиентов (по одному в строке)</Text>
+      <TextInput style={[s.input, s.multi]} value={ing} onChangeText={setIng} multiline />
+      <Text style={s.label}>Пошаговые инструкции (один шаг в строке)</Text>
+      <TextInput style={[s.input, s.multi]} value={steps} onChangeText={setSteps} multiline />
+      <TouchableOpacity style={[s.btn, { marginTop: 14 }]} onPress={save}>
+        <Text style={s.btnText}>Сохранить рецепт</Text>
+      </TouchableOpacity>
+      <Text style={s.h2}>Дополнительные характеристики</Text>
+      <Text style={s.label}>Категория</Text>
       <Chips data={CATEGORIES.filter((c) => c !== 'Все')} value={category} onChange={setCategory} />
       <View style={s.row}>
         <View style={{ flex: 1, marginRight: 8 }}>
-          <Text style={s.h2}>Время приготовления</Text>
+          <Text style={s.label}>Время приготовления</Text>
           <TextInput style={s.input} value={time} onChangeText={setTime} placeholder="30 мин" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={s.h2}>Количество порций</Text>
+          <Text style={s.label}>Количество порций</Text>
           <TextInput style={s.input} value={servings} onChangeText={setServings} placeholder="4" keyboardType="numeric" />
         </View>
       </View>
-      <Text style={s.h2}>Калории</Text>
+      <Text style={s.label}>Калории</Text>
       <TextInput style={s.input} value={calories} onChangeText={setCalories} placeholder="350 ккал" />
-      <Text style={s.h2}>Уровень сложности</Text>
+      <Text style={s.label}>Уровень сложности</Text>
       <Chips data={DIFFICULTIES} value={difficulty} onChange={setDifficulty} />
-      <Text style={s.h2}>Список ингредиентов (по одному в строке)</Text>
-      <TextInput style={[s.input, s.multi]} value={ing} onChangeText={setIng} multiline />
-      <Text style={s.h2}>Пошаговые инструкции (один шаг в строке)</Text>
-      <TextInput style={[s.input, s.multi]} value={steps} onChangeText={setSteps} multiline />
-      <TouchableOpacity style={[s.btn, { marginTop: 20 }]} onPress={save}>
-        <Text style={s.btnText}>Сохранить рецепт</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#fff8f0', padding: 16 },
-  topbar: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-  backBtn: { backgroundColor: '#ffe8cc', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
+  screen: { flex: 1, backgroundColor: '#fff8f0', padding: 14 },
+  topbar: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
+  backBtn: { backgroundColor: '#ffe8cc', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 10 },
   backTxt: { color: ORANGE, fontWeight: '800', fontSize: 15 },
   topTitle: { marginLeft: 10, color: '#868e96', fontWeight: '600', fontSize: 15, flex: 1 },
-  h1: { fontSize: 26, fontWeight: '800', color: '#3b2a1a', marginTop: 8, marginBottom: 8 },
-  h2: { fontSize: 17, fontWeight: '700', color: '#3b2a1a', marginTop: 16, marginBottom: 6 },
+  h1: { fontSize: 24, fontWeight: '800', color: '#3b2a1a', marginTop: 6, marginBottom: 6 },
+  h2: { fontSize: 17, fontWeight: '700', color: '#3b2a1a', marginTop: 14, marginBottom: 4 },
+  label: { fontSize: 14, fontWeight: '700', color: '#3b2a1a', marginTop: 10, marginBottom: 4 },
+  sectionLabel: { fontSize: 13, fontWeight: '700', color: '#868e96', marginBottom: 6, textTransform: 'uppercase' },
   title: { fontSize: 16, fontWeight: '700', color: '#3b2a1a' },
   muted: { color: '#868e96', marginTop: 4 },
-  line: { fontSize: 15, color: '#343a40', marginVertical: 3 },
+  line: { fontSize: 15, color: '#343a40', marginVertical: 2 },
   row: { flexDirection: 'row', alignItems: 'center' },
-  wrap: { flexDirection: 'row', flexWrap: 'wrap' },
+  cats: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 6 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: '#fff', borderRadius: 12, paddingVertical: 6, marginTop: 6 },
+  cell: { width: '50%', paddingHorizontal: 10, paddingVertical: 4 },
+  cellLabel: { fontSize: 11, color: '#868e96', textTransform: 'uppercase', fontWeight: '700' },
+  cellValue: { fontSize: 14, color: '#343a40', fontWeight: '600' },
   card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, padding: 10, marginVertical: 5, elevation: 2 },
   thumb: { backgroundColor: '#ffe8cc', borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  chip: { paddingHorizontal: 14, height: 36, borderRadius: 18, backgroundColor: '#ffe8cc', justifyContent: 'center', marginRight: 8, marginBottom: 8 },
+  chip: { paddingHorizontal: 10, height: 30, borderRadius: 15, backgroundColor: '#ffe8cc', justifyContent: 'center', marginRight: 6, marginBottom: 6 },
   chipOn: { backgroundColor: ORANGE },
-  chipText: { color: '#5c3d1e', fontWeight: '600', fontSize: 14 },
-  btn: { backgroundColor: ORANGE, padding: 14, borderRadius: 12, alignItems: 'center' },
+  chipText: { color: '#5c3d1e', fontWeight: '600', fontSize: 12 },
+  btn: { backgroundColor: ORANGE, padding: 12, borderRadius: 12, alignItems: 'center' },
   btnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  info: { backgroundColor: '#fff', borderRadius: 12, padding: 12, marginTop: 8 },
-  infoTxt: { fontSize: 15, marginVertical: 2, color: '#343a40' },
-  input: { backgroundColor: '#fff', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#dee2e6' },
-  multi: { minHeight: 110, textAlignVertical: 'top' },
-  preview: { width: '100%', height: 180, borderRadius: 12, marginBottom: 8 },
+  input: { backgroundColor: '#fff', borderRadius: 10, padding: 10, borderWidth: 1, borderColor: '#dee2e6' },
+  multi: { minHeight: 62, textAlignVertical: 'top' },
+  preview: { width: '100%', height: 120, borderRadius: 12, marginBottom: 8 },
 });
